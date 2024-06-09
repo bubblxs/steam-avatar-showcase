@@ -1,0 +1,55 @@
+html
+head 
+    title #{title}
+
+style.
+    * {
+        font-family: sans-serif;
+        box-sizing: border-box;
+        font-size: 18px;
+        padding: 0;
+        margin: 0;
+        color: #a8d2d2;
+    }
+    body{
+        background-color: #243636; 
+        height: 100vh; 
+        width: 100%;
+    }
+    h2{
+        width: 100%;
+        background-color: black;
+        padding: 30px;
+        text-align: center;
+    }
+    .friend_block{
+        margin-inline: auto;
+    }
+    .friend-wrapper{
+        background-color: black;
+        margin-inline: auto;
+        width: 60%;
+    }
+    .friend{
+        display: flex;
+        padding: 10px;
+        margin-top: 5px;
+        margin-bottom: 10px;
+        background-color: black;
+        border-bottom: 1px solid #a8d2d2;
+    }
+    .selectable{
+        margin: 10px;
+    }
+
+body
+    h2 #{steamid}'s friends
+    - if (friends.length > 0)
+        div(class="friend-wrapper")
+            div(class="friend_block")
+                - for (var i = 0; i < friends.length; i++)
+                    div(class='friend')
+                        img(src="http://localhost:4242/static/profile_full.jpg", style="height: 60px; width: 60px")
+                        a(href=`http://localhost:4242/${friends[i]}`, class="selectable" data-steamid=friends[i]) #{friends[i]}
+    - else 
+        h2 no friendos :(

@@ -1,0 +1,40 @@
+doctype html
+html
+    head
+        title ::#{steamid}
+    
+    style.
+        * {
+            font-family: sans-serif;
+            box-sizing: border-box;
+            font-size: 18px;
+            padding: 0;
+            margin: 0;
+            color:#a8d2d2;
+        }
+        .profile-wrapper{
+            background-color: black ;
+            margin-inline: auto;
+            padding: 30px;
+            width: 60%;
+        }
+        .avatar{
+            height: 184px;
+            width: 184px;
+            margin-right: 30px
+        }
+
+    body(style="background-color: #243636")
+        div(class="profile-wrapper")
+            div(style="display: flex")
+                div(class="playerAvatarAutoSizeInner")
+                    div(class="profile_avatar_frame")
+                    img(src="http://localhost:4242/static/profile_full.jpg")
+                
+                div(style="margin-inline: 25px")
+                    p(style="font-size: 24px; margin-bottom: 10px") #{steamid}
+                    p(style="font-size: 13px") #{personaname}
+            
+        
+        script.
+            g_rgProfileData = {"url":"https:\/\/steamcommunity.com\/id\/GabeLoganNewell\/","steamid":"76560000000000000","personaname":"GabeLoganNewell"};
