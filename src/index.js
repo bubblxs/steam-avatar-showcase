@@ -1,19 +1,20 @@
 require("dotenv").config();
 
 const assert = require("node:assert");
-const { join } = require("node:path");
 const schedule = require("node-schedule");
 const { Readable } = require("node:stream");
 const { randomBytes } = require("node:crypto");
+const { join, resolve } = require("node:path");
 const { createWriteStream, mkdirSync, existsSync } = require("node:fs");
 
-const Tumblr = require("./Tumblr");
-const Scrapper = require("./Scrapper");
-const Database = require("./Database");
 const { isDevEnv, log } = require("./utils");
 
-const LOCAL_HOST = "http://localhost:4242";
-const IMG_DIR = join(__dirname, "../imgs/");
+const Tumblr = require("./Tumblr");
+const Scraper = require("./Scraper");
+const Database = require("./Database");
+
+const DEV_PROFILE = "http://localhost:4242/profiles/1";
+const IMG_DIR = resolve(__dirname, "imgs");
 const db = new Database({
     user: process.env.POSTGRES_USER,
     host: process.env.POSTGRES_HOST,
@@ -40,7 +41,7 @@ const init = async () => {
     }
 
     if (isDevEnv()) {
-        queue.push(LOCAL_HOST);
+        queue.push(DEV_PROFILE);
     }
 
     queue.push(...steamIds);
@@ -69,20 +70,16 @@ const downloadImage = async (filename, saveTo, url) => {
 }
 
 const crawl = async (sid, friends = true) => {
-    const crawler = new Scrapper(sid);
-
-    await crawler.init();
-
-    const avatarUrl = await crawler.fetchAvatar();
-    const content = await crawler.fetchHTML(crawler.getProfileUrl());
-    const steamId = crawler.extractSteamId(content);
-    let friendList = [];
+    const scraper = new Scraper(sid);
+    const avatarUrl = await scraper.fetchAvatar();
+    const steamId = await scraper.fetchSteamId();
+    const friendList = [];
 
     if (friends) {
-        friendList = await crawler.fetchFriends();
+        (await scraper.fetchFriends()).forEach((fren) => {
+            friendList.push(fren);
+        });
     }
-
-    await crawler.close();
 
     return {
         steamId,
@@ -131,6 +128,8 @@ const run = async () => {
 
     queue.push(...friends);
     queue.shift();
+
+    log(`items on queue: ${queue.length}`);
 };
 
 const main = async () => {

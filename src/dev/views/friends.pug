@@ -50,6 +50,6 @@ body
                 - for (var i = 0; i < friends.length; i++)
                     div(class='friend')
                         img(src="http://localhost:4242/static/profile_full.jpg", style="height: 60px; width: 60px")
-                        a(href=`http://localhost:4242/${friends[i]}`, class="selectable" data-steamid=friends[i]) #{friends[i]}
+                        a(href=`http://localhost:4242/profiles/${friends[i]}`, class="selectable" data-steamid=friends[i]) #{friends[i]}
     - else 
         h2 no friendos :(

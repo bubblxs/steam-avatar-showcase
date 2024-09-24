@@ -5,13 +5,13 @@ app.use("/static", express.static(__dirname + '/images'));
 app.set("views", "./src/dev/views");
 app.set("view engine", "pug");
 
-app.get("/:id", (req, res) => {
+app.get("/profiles/:id", (req, res) => {
     res.render("profile", {
         steamid: req.params.id,
     });
 });
 
-app.get("/:id/friends", (req, res) => {
+app.get("/profiles/:id/friends", (req, res) => {
     const steamid = req.params.id;
     let numFriends = parseInt(req.query.nf) || 0;
     let friends = [];
@@ -33,7 +33,7 @@ app.get("/error", (req, res) => {
 });
 
 app.all("*", (req, res) => {
-    res.redirect("/1");
+    res.redirect("/profiles/1");
 });
 
 app.listen(4242, () => console.log(`running on ${4242}`));

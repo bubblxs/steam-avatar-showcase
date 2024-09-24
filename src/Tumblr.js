@@ -1,4 +1,4 @@
-const { createReadStream } = require("fs");
+const { createReadStream } = require("node:fs");
 const client = require("tumblr.js");
 
 module.exports = class Tumblr {
