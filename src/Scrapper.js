@@ -11,7 +11,7 @@ const URL_STEAM = {
     }
 };
 
-module.exports = class Crawler {
+module.exports = class Scrapper {
     #_browser;
     #_profileUrl;
 

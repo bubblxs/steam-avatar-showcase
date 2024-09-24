@@ -1,14 +1,14 @@
 require("dotenv").config();
 
-const { join } = require("path");
-const assert = require("assert");
-const { Readable } = require("stream");
-const { randomBytes } = require("crypto");
+const assert = require("node:assert");
+const { join } = require("node:path");
 const schedule = require("node-schedule");
-const { createWriteStream, mkdirSync, existsSync } = require("fs");
+const { Readable } = require("node:stream");
+const { randomBytes } = require("node:crypto");
+const { createWriteStream, mkdirSync, existsSync } = require("node:fs");
 
 const Tumblr = require("./Tumblr");
-const Crawler = require("./Crawler");
+const Scrapper = require("./Scrapper");
 const Database = require("./Database");
 const { isDevEnv, log } = require("./utils");
 
@@ -27,13 +27,12 @@ const tumblr = new Tumblr({
     token: process.env.TUMBLR_TOKEN,
     token_secret: process.env.TUMBLR_TOKEN_SECRET
 });
-let queue = [];
+const queue = [];
 
 const init = async () => {
     const steamIds = process.argv.slice(2);
 
     await db.init();
-
     await tumblr.init();
 
     if (!existsSync(IMG_DIR)) {
@@ -58,19 +57,19 @@ const init = async () => {
     }
 }
 
-const downloadImage = async (fileName, dir, url) => {
-    const filePath = join(dir, fileName);
-    const ws = createWriteStream(filePath);
+const downloadImage = async (filename, saveTo, url) => {
+    const path = join(saveTo, filename);
+    const ws = createWriteStream(path);
     const res = await fetch(url);
     const data = res.body;
 
     Readable.fromWeb(data).pipe(ws);
 
-    return filePath;
+    return path;
 }
 
-const crawl = async (sid, friends = false) => {
-    const crawler = new Crawler(sid);
+const crawl = async (sid, friends = true) => {
+    const crawler = new Scrapper(sid);
 
     await crawler.init();
 
@@ -96,28 +95,28 @@ const run = async () => {
     assert(queue.length > 0, "queue is empty");
 
     const sid = queue.at(0);
-    const { avatarUrl, steamId, friends } = await crawl(sid, true);
-    const { fileName, fileExt } = ((url) => {
+    const { avatarUrl, steamId, friends } = await crawl(sid);
+    const { filename, ext } = ((url) => {
         return {
-            fileName: randomBytes(8).toString("hex"),
-            fileExt: url.split(".").at(-1).replace("/", "")
+            filename: randomBytes(8).toString("hex"),
+            ext: url.split(".").at(-1).replace("/", "")
         };
     })(avatarUrl);
-    const filePath = await downloadImage(`${fileName}.${fileExt}`, IMG_DIR, avatarUrl);
+    const filePath = await downloadImage(`${filename}.${ext}`, IMG_DIR, avatarUrl);
 
     await db.query(`INSERT INTO FileExtensions (file_ext) VALUES ($1) ON CONFLICT DO NOTHING;`,
-        [fileExt]
+        [ext]
     );
 
     await db.query(
         `INSERT INTO Files (file_name, fk_file_ext_id) 
         VALUES ($1, (SELECT FILE_EXT_ID FROM FileExtensions WHERE FILE_EXT = $2 LIMIT 1));`,
-        [fileName, fileExt]
+        [filename, ext]
     );
 
     await db.query(`INSERT INTO Users (steam_id, fk_file_id) 
         VALUES ($1, (SELECT file_id FROM Files WHERE FILE_NAME = $2 LIMIT 1)) ON CONFLICT DO NOTHING;`,
-        [steamId, fileName]
+        [steamId, filename]
     );
 
     const res = isDevEnv() ? "we are just doing some tests here, mate. :3" : await tumblr.post(filePath);
@@ -125,18 +124,18 @@ const run = async () => {
     await db.query(`INSERT INTO Posts (created_at, fk_file_id, fk_user_id) 
         VALUES ($1, (SELECT FILE_ID FROM Files WHERE FILE_NAME = $2 LIMIT 1), 
         (SELECT USER_ID FROM Users WHERE STEAM_ID = $3 LIMIT 1));`,
-        [Date.now(), fileName, steamId]
+        [Date.now(), filename, steamId]
     );
 
-    log(`${fileName}.${fileExt} ${res}`, "Success");
+    log(`${filename}.${ext} ${res}`, "Success");
 
     queue.push(...friends);
     queue.shift();
-}
+};
 
 const main = async () => {
     await init();
     await run();
-}
+};
 
 main();
